@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Speeding - Is it worth it?</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://d3js.org/topojson.v3.min.js"></script>
+
+
+  <style>
+   body{
+    background-color: #e5deca;
+   }
+    canvas { 
+      border: 1px solid white;
+      width: 60vw; 
+      height: 150px;
+    }
+    canvas .canvas2 { 
+      border: 1px solid white;
+      width: 60vw; 
+      height: 150px;
+    }
+    button { display: block;
+    padding: 5px; }
+    .userInput{
+        border: 1px solid black;
+        height: 300px;
+        width: 30vw;
+        display: flex;
+        flex-direction: column;
+        padding: 2px;
+    }
+    .userInput label {
+      margin-bottom: 5px;
+    }
+    .userInput input {
+      margin-bottom: 10px;
+      width: 30%;
+    }
+    .lines{
+        display: flex;
+        flex-direction: row;
+        padding: 5px;
+    }
+    .twoboxes{
+        display: flex;
+        flex-direction: column;
+    }
+    .second{
+        display: flex;
+        flex-direction: row;
+        
+    }
+    .second h2{
+      width:45%;
+    }
+    text, h1, h2, h3, h4, label{
+      font-family: sans-serif;
+      font-size:125%;
+
+    }
+    h2{
+      font-size:50px;
+    }
+    h1{
+      font-size: 60px;
+    }
+    .state {
+      fill: lightgrey;
+    }
+    .outline {
+      fill: none;
+      stroke: black;
+      stroke-width: 1px;
+    }
+    .graticule {
+        fill: none;
+        stroke: #e5deca;
+        stroke-width: 1px;
+    }
+    .tooltip {
+        pointer-events: none;
+    }
+    .map{
+      display: flex;
+      flex-direction: column;
+    }
+    .mapbuttons{
+      display: flex;
+      flex-direction: row;
+    }
+    .article{
+      display: flex;
+      flex-direction: column;
+    }
+    .article text{
+      font-size: 20px;
+      
+    }
+    .legend-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px; /* Adjust as needed */
+    }
+
+    
+
+  </style>
+</head>
+<body>
+    <h1>Do you have a need for speed?</h1>
+    <div class="lines">
+    <div class="userInput">
+    <h4>Enter a speed limit and miles being traveled to see how much time you save by speeding</h4>
+    <label for="speedInput">Speed Limit (mph):</label>
+  <input type="number" id="speedInput" min="0" max="100" value="55">
+  <label for="mileInput">Miles driven:</label>
+  <input type="number" id="mileInput" min="0" max="1000" value="50">
+  <label for="overInput">Mph over limit:</label>
+  <input type="number" id="overInput" min="0" max="1000" value="10">
+  </div>
+  <button id="Start">Start</button>
+  <br />
+  
+    <div class="twoboxes">
+  <canvas></canvas>
+  <canvas class="canvas2"></canvas></div>
+  <svg id="timediff" height="302" width="20%" style="border: 1px solid black;"></svg>
+</div>
+  <button id="Reset">Reset</button>
+
+  <div class="second">
+  <div class="article">
+    <h2>It's not worth it.</h2>
+  <text>
+    In the realm of road safety, the debate surrounding maximum speed limits has resurfaced. While speed can offer a sense of freedom and efficiency, it comes at a cost. 
+    The statistics paint a stark picture: in 2021 alone, speed-related crashes accounted for 29% of all motor vehicle 
+    fatalities, claiming 12,330 lives. The National Highway Traffic Safety Administration (NHTSA) underscored the staggering economic toll of 
+    these crashes, pegging it at a substantial $46 billion in 2019.<br /><br />
+
+    The evolution of speed limit laws reflects a delicate balance between mobility and safety. Historically, states held jurisdiction over speed 
+    limits until the national maximum speed limit era of the 1970s and 1980s, when a uniform 55 mph limit was enforced nationwide. Since its 
+    repeal in 1995, speed limits have steadily climbed, with 22 states now boasting 70 mph limits, 11 states at 75 mph, and some interstates 
+    even pushing 80 mph. Texas notably made headlines with an 85 mph limit on a stretch of State Highway 130. <br /><br/>
+    
+    However, the correlation between higher speed limits and increased fatalities cannot be ignored. Research from the National Research Council 
+    and IIHS indicates that while faster travel speeds may save time, they exact a heavy toll in terms of human lives. The IIHS found that a mere 
+    5 mph increase in the maximum speed limit led to an 8% spike in fatality rates on interstates and freeways from 1993 to 2017.<br /><br />
+    
+    These findings serve as a sobering reminder of the need to approach speed limits with caution. As we navigate this new fast-paced world,
+     it becomes imperative to strike a balance between mobility and safety on our roads. Our ability to mitigate speed-related fatalities hinges 
+     not only on setting reasonable speed limits but also on fostering a culture of responsible
+     driving and awareness of the consequences of excessive speed.<br />
+    </text></div>
+  <div class="map">
+    <div class="mapbuttons">
+    <button id="max">Maximum Speeds</button>
+    <button id="fatalities">Percentage of Fatalities from Speeding</button></div>
+  <svg id="choropleth" height="600" width="1000" style="background: #445; margin-top:50px" >
+
+  </svg>
+<div class="legend-container">
+  <svg id="colorLegend" height="100" width="600" style="background: #e5deca; margin-top:30px; ">
+
+  </svg></div></div>
+
+</div>
+  <script>
+    var timediffSvg = document.getElementById("timediff");
+
+    var speedInput = document.getElementById("speedInput");
+    var mileInput = document.getElementById("mileInput");
+    var overInput = document.getElementById("overInput");
+
+    var cvs = document.querySelector("canvas");
+    var cvs2 = document.querySelector(".canvas2");
+    var ctx1 = cvs.getContext("2d");
+    var ctx2 = cvs2.getContext("2d");
+
+    var initialSpeed = parseFloat(speedInput.value);
+    var initialMiles = parseFloat(mileInput.value);
+    var initialOver = parseFloat(overInput.value);
+
+    updateTimediff();
+
+    function updateTimediff() {
+      var speed = parseFloat(speedInput.value);
+      var miles = parseFloat(mileInput.value);
+      var over = parseFloat(overInput.value);
+
+      var timeDiff = timeDifference(speed, miles, over);
+
+      var timediffText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      timediffText.setAttribute("x", "10");
+      timediffText.setAttribute("y", "100");
+      timediffText.textContent = "Time Saved: ";
+
+      
+      var timediffText2 = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      timediffText2.setAttribute("x", "20");
+      timediffText2.setAttribute("y", "150");
+      timediffText2.setAttribute("fill", "red");
+      timediffText2.setAttribute("font-size", "24");
+
+      timediffText2.textContent = timeDiff.toFixed(2) + " minutes";
+
+
+      timediffSvg.innerHTML = "";
+      timediffSvg.appendChild(timediffText);
+      timediffSvg.appendChild(timediffText2);
+
+
+
+
+      cvs.width = cvs.width;
+      ctx1.lineWidth = 8;
+      ctx1.strokeStyle = "lightgreen";
+      ctx1.fillStyle = "#445";
+      animateTop(speed);
+
+      cvs2.width = cvs2.width;
+      ctx2.lineWidth = 8;
+      ctx2.strokeStyle = "red";
+      ctx2.fillStyle = "#445";
+      animateBottom(speed, over);
+    }
+
+    function timeDifference(speed, miles, over) {
+      let timeOriginal = (miles / speed) * 60;
+      let timeFaster = (miles / (speed + over)) * 60;
+      let timeDifference = timeOriginal - timeFaster;
+      return timeDifference;
+    }
+
+    function drawLine(ctx, x1, y1, x2, ratio) {
+      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      ctx.moveTo(x1, y1);
+      x2 = x1 + ratio * (x2 - x1);
+      ctx.lineTo(x2, y1); 
+      ctx.stroke();
+    }
+
+    function animateTop(speed) {
+      var ratio = 0;
+      var animationSpeed = speed/10000;
+      var endX = cvs.width - 50;
+      var draw = function() {
+        drawLine(ctx1, 50, 75, endX, ratio);
+        if (ratio < 1) {
+          ratio += animationSpeed;
+          requestAnimationFrame(draw);
+        }
+      };
+      draw();
+    }
+
+    function animateBottom(speed, over) {
+      var ratio = 0;
+      var animationSpeed = (speed+over)/10000;
+      var endX = cvs2.width - 50;
+      var draw = function() {
+        drawLine(ctx2, 50, 75, endX, ratio);
+        if (ratio < 1) {
+          ratio += animationSpeed;
+          requestAnimationFrame(draw);
+        }
+      };
+      draw();
+    }
+
+    animateTop(initialSpeed);
+    animateBottom(initialSpeed, initialOver);
+
+    var btn = document.querySelector("#Reset");
+    btn.addEventListener("click", function(evt) {
+      speedInput.value = initialSpeed;
+      mileInput.value = initialMiles;
+      overInput.value = initialOver;
+      updateTimediff();
+    });
+    var btn2 = document.querySelector("#Start");
+    btn2.addEventListener("click", function(evt) {
+      updateTimediff();
+    });
+
+
+    //map
+    const svg = d3.select("#choropleth");
+    const width = svg.attr("width");
+    const height = svg.attr("height");
+    const margin = { top: 20, right: 20, bottom: 20, left:20};
+    const mapWidth = width - margin.left - margin.right;
+    const mapHeight = height - margin.top - margin.bottom;
+    const map = svg.append("g")
+                    .attr("transform","translate("+margin.left+","+margin.top+")");
+    
+    const requestData = async function() {
+  
+  
+      const us = await d3.json("us-smaller.json");
+      console.log(us);
+
+      var states = topojson.feature(us, us.objects.states);     
+      var statesMesh = topojson.mesh(us, us.objects.states);    
+      var projection = d3.geoAlbersUsa().fitSize([mapWidth, mapHeight], states);
+      var path = d3.geoPath().projection(projection);
+      console.log(states);
+      console.log(statesMesh);
+      
+      let graticule = d3.geoGraticule10();
+      console.log(graticule);
+      map.append("path").attr("class","graticule").attr("d", path(graticule));
+      
+      let statePaths = map.selectAll("path.state").data(states.features)
+                      .join("path")
+                      .attr("class", "state")
+                      .attr("note", d => d.id)  // debugging
+                      .attr("d", path)
+                      .on('mouseover',  mouseEntersState )
+                      .on('mouseout',  mouseLeavesState );
+
+      map.append("path").datum(statesMesh)
+        .attr("class","outline")
+        .attr("d", path);
+
+      
+      const surveyData = await d3.csv("States.csv", d3.autoType);
+      console.log(surveyData);
+      
+      var stateDict = {}  
+      surveyData.forEach( d => {
+        stateDict[d.state_code] = d;
+      });
+    console.log(stateDict)
+
+
+
+      const uniqueRuralValues = Array.from(new Set(surveyData.map(d => d.Rural)));
+      console.log(uniqueRuralValues)
+      const colorScale = d3.scaleOrdinal().domain(uniqueRuralValues).range(["#ff5252", "#ff7b7b", "#ff0000","#ffbaba", "#a70000"]);
+
+      map.selectAll(".state")
+       .style("fill", d => {
+        const stateData = stateDict[d.id]; 
+        return stateData ? colorScale(stateData.Rural) : "black"; 
+       })
+
+    drawLegend("#colorLegend", colorScale);
+
+    function maxMap(){
+      const uniqueRuralValues = Array.from(new Set(surveyData.map(d => d.Rural))); 
+      console.log(uniqueRuralValues)
+      const colorScale = d3.scaleOrdinal().domain(uniqueRuralValues).range(["#ff5252", "#ff7b7b", "#ff0000","#ffbaba", "#a70000"]);
+
+      map.selectAll(".state")
+       .style("fill", d => {
+        const stateData = stateDict[d.id]; 
+        return stateData ? colorScale(stateData.Rural) : "black"; 
+       })
+
+    drawLegend("#colorLegend", colorScale);
+    }
+
+    function fatalMap(){
+      const minMax = d3.extent( surveyData, d => d.Percent );
+      console.log(minMax);
+
+      const colorScale2 = d3.scaleQuantize() 
+                          .domain(minMax)
+                          .range(["#ffbaba","#ff7b7b", "#ff5252", "#ff0000", "#a70000"])
+
+        map.selectAll(".state")
+          .style("fill", d => {
+          const stateData = stateDict[d.id]; 
+          return stateData ? colorScale2(stateData.Percent) : "black"; 
+        })
+    
+        drawLegend("#colorLegend", colorScale2);
+    }
+
+    var btn3 = document.querySelector("#fatalities");
+    btn3.addEventListener("click", function(evt) {
+      fatalMap();
+    });
+    var btn3 = document.querySelector("#max");
+    btn3.addEventListener("click", function(evt) {
+      maxMap();
+    });
+
+
+
+    let tooltipWidth = 270;
+    let tooltipHeight = 70;
+    
+    
+    let momesh =  map.append("path")
+                     .attr("class","mouseover outline")
+                     .style("stroke", "black")
+                     .style("stroke-width", 3)
+                     .attr("d", "");
+  
+   
+    let tooltip = map.append("g")
+                     .attr("class","tooltip")
+                     .attr("visibility","hidden");
+    tooltip.append("rect")
+           .attr("fill", "black")
+           .attr("opacity", 0.9)
+           .attr("x", -tooltipWidth / 2.0)
+           .attr("y", 0)
+           .attr("width",tooltipWidth)
+           .attr("height",tooltipHeight)
+    let txt = tooltip.append("text")
+                     .attr("fill", "white")
+                     .attr("text-anchor","middle")
+                     .attr("alignment-baseline","hanging")
+                     .attr("x", 0)
+                     .attr("y", 5);
+    let txt2 = tooltip.append("text")
+                     .attr("fill", "white")
+                     .attr("text-anchor","middle")
+                     .attr("alignment-baseline","hanging")
+                     .attr("x", 0)
+                     .attr("y", 27);
+    let txt3 = tooltip.append("text")
+                     .attr("fill", "white")
+                     .attr("text-anchor","middle")
+                     .attr("alignment-baseline","hanging")
+                     .attr("x", 0)
+                     .attr("y", 47);
+    
+    
+    function mouseEntersState() {
+      tooltip.style("visibility","visible")
+  
+      let state = d3.select(this);
+      
+      let stateID = state.datum().id;
+      let stateDat = stateDict[stateID]
+      
+      txt.text(stateDat.States);
+      txt2.text("Maximum Speed: "+ stateDat.Rural + "mph");
+      txt3.text("Fatalities from Speeding: " + stateDat.Fatal)
+      
+      let bounds = path.bounds( state.datum() );   
+      
+      let xPos = (bounds[0][0]+bounds[1][0])/2.0;
+      let yPos = bounds[1][1] - 15;
+      
+      tooltip.attr("transform",`translate(${xPos},${yPos})`);
+      
+      
+      var mo = topojson.mesh(us, us.objects.states, function(a, b) { return a.id === stateID || b.id === stateID; });
+      momesh.datum(mo).attr("d", path)
+      
+      
+      
+  
+    }
+  
+    function mouseLeavesState() {
+  
+     tooltip.style("visibility","hidden");
+  
+     let state = d3.select(this);
+     momesh.attr("d", "");
+  
+    }
+
+
+    
+  
+  }
+  requestData();
+  
+  
+  
+  </script>
+  
+  
+  
+  <script>
+    
+  // TOOK FROM 3300 NOTES!! Thank you!!
+  // Flexible legend-drawing function - Jeff Rzeszotarski, 2022
+  //   Released under MIT Free license
+  //  Takes in an SVG element selector <legendSelector> and a d3 color scale <legendColorScale>
+  //
+  // Usage example: drawLegend("#legendID", grossIncomeColorScale)
+  function drawLegend(legendSelector, legendColorScale) {
+    d3.select(legendSelector).selectAll("*").remove();
+
+    
+    // This code should adapt to a variety of different kinds of color scales
+    //  Credit Prof. Rz if you are basing a legend on this structure, and note PERFORMANCE CONSIDERATIONS
+    
+    // Shrink legend bar by 5 px inwards from sides of SVG
+    const offsets = { width: 10,
+                      top: 2,
+                      bottom: 24 }; 
+    // Number of integer 'pixel steps' to draw when showing continuous scales
+    //    Warning, not using a canvas element so lots of rect tags will be created for low stepSize, causing issues with performance -- keep this large
+    const stepSize = 4; 
+    // Extend the minmax by 0% in either direction to expose more features by default
+    const minMaxExtendPercent = 0;
+     
+    
+    const legend = d3.select(legendSelector);
+    const legendHeight = legend.attr("height");
+    const legendBarWidth = legend.attr("width") - (offsets.width * 2);
+    const legendMinMax = d3.extent(legendColorScale.domain()); 
+                // recover the min and max values from most kinds of numeric scales
+    const minMaxExtension = (legendMinMax[1] - legendMinMax[0]) * minMaxExtendPercent;
+    const barHeight = legendHeight - offsets.top - offsets.bottom;     
+    
+    // In this case the "data" are pixels, and we get numbers to use in colorScale
+    // Use this to make axis labels
+    let barScale = d3.scaleLinear().domain([legendMinMax[0]-minMaxExtension,
+                                              legendMinMax[1]+minMaxExtension])
+                                   .range([0,legendBarWidth]);
+    let barAxis = d3.axisBottom(barScale);
+    
+    // Place for bar slices to live
+    let bar = legend.append("g")
+                    .attr("class", "legend colorbar")
+                    .attr("transform", `translate(${offsets.width},${offsets.top})`)
+    
+    // ****** SWITCHES FOR DIFFERENT SCALE TYPES ******
+    
+    // Check if we're using a binning scale - if so, we make blocks of color
+    if (legendColorScale.hasOwnProperty('thresholds') || legendColorScale.hasOwnProperty('quantiles')) {
+      // Get the thresholds
+      let thresholds = [];
+      if (legendColorScale.hasOwnProperty('thresholds')) { thresholds = legendColorScale.thresholds() }
+      else { thresholds = legendColorScale.quantiles() }
+      
+      const barThresholds = [legendMinMax[0], ...thresholds, legendMinMax[1]];
+      
+      // Use the quantile breakpoints plus the min and max of the scale as tick values
+      barAxis.tickValues(barThresholds);
+      
+      // Draw rectangles between the threshold segments
+      for (let i=0; i<barThresholds.length-1; i++) {
+        let dataStart = barThresholds[i];
+        let dataEnd = barThresholds[i+1];
+        let pixelStart = barAxis.scale()(dataStart);
+        let pixelEnd = barAxis.scale()(dataEnd);
+        
+        bar.append("rect")
+           .attr("x", pixelStart)
+           .attr("y", 0)
+           .attr("width", pixelEnd - pixelStart )
+           .attr("height", barHeight)
+           .style("fill", legendColorScale( (dataStart + dataEnd) / 2.0 ) ); 
+      }
+    }
+    // Else if we have a continuous / roundable scale
+    //  In an ideal world you might construct a custom gradient mapped to the scale
+    //  For this one, we use a hack of making stepped rects
+    else if (legendColorScale.hasOwnProperty('rangeRound')) {
+      // NOTE: The barAxis may round min and max values to make them pretty
+      // ** This also means there is a risk of the legend going beyond scale bounds
+      // We need to use the barAxis min and max just to be sure the bar is complete
+      //    Using barAxis.scale().invert() goes from *axis* pixels to data values easily
+      // ** We also need to create patches for the scale if the labels exceed bounds
+      //     (floating point comparisons risky for small data ranges,but not a big deal
+      //      because patches will be indistinguishable from actual scale bottom)
+      // It's likely that scale clamping will actually do this for us elegantly
+      // ...but better to be safer and patch the regions anyways
+      
+      for (let i=0; i<legendBarWidth; i=i+stepSize) {
+        
+        let center = i+(stepSize/2);
+        let dataCenter = barAxis.scale().invert( center );
+        
+        // below normal scale bounds
+        if ( dataCenter < legendMinMax[0] ) { 
+          bar.append("rect")
+             .attr("x", i)
+             .attr("y", 0)
+             .attr("width", stepSize)
+             .attr("height",barHeight)
+             .style("fill", legendColorScale( legendMinMax[0] ) ); 
+         }
+         // within normal scale bounds
+         else if ( dataCenter < legendMinMax[1] ) {
+           bar.append("rect")
+              .attr("x", i)
+              .attr("y", 0)
+              .attr("width", stepSize)
+              .attr("height",barHeight)
+              .style("fill", legendColorScale( dataCenter ) ); 
+         }
+         // above normal scale bounds
+         else {
+           bar.append("rect")
+              .attr("x", i)
+              .attr("y", 0)
+              .attr("width", stepSize)
+              .attr("height",barHeight)
+              .style("fill", legendColorScale( legendMinMax[1] ) ); 
+         }
+        
+      }
+    }
+    // Otherwise we have a nominal scale
+    else {
+      let nomVals = legendColorScale.domain().sort();
+      
+      // Use a scaleBand to make blocks of color and simple labels
+      let barScale = d3.scaleBand().domain(nomVals)
+                                   .range([0,legendBarWidth])
+                                   .padding(0.05);
+      barAxis.scale(barScale);
+      
+      // Draw rectangles for each nominal entry
+      nomVals.forEach( d => {
+        bar.append("rect")
+           .attr("x", barScale(d) )
+           .attr("y", 0)
+           .attr("width", barScale.bandwidth() )
+           .attr("height", barHeight)
+           .style("fill", legendColorScale( d ) );
+      });
+    }
+    // DONE w/SWITCH
+    
+    // Finally, draw legend labels
+    legend.append("g")
+          .attr("class", "legend axis")
+          .attr("transform",`translate(${offsets.width},${offsets.top+barHeight+5})`)
+          .call(barAxis);
+    
+  }
+  </script>
+  
+  
+  
+    
+  </script>
+</body>
+</html>

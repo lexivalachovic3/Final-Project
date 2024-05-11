@@ -1,0 +1,51 @@
+States,state_code,Rural,Urban,Percent,Fatal
+Alabama,1,70,,28,274
+Alaska,2,65,55,40,27
+Arizona,4,75,65,32,373
+Arkansas,5,75,65,21,148
+California,6,70,65,35,1509
+Colorado,8,75,65,29,202
+Connecticut,9,65,55,40,119
+Delaware,10,65,55,34,46
+Florida,12,70,65,10,391
+Georgia,13,70,70,21,369
+Hawaii,15,60,60,48,45
+Idaho,16,75,75,22,59
+Illinois,17,70,55,37,487
+Indiana,18,70,55,27,252
+Iowa,19,70,55,24,84
+Kansas,20,75,75,23,98
+Kentucky,21,65,65,18,143
+Louisiana,22,75,70,29,281
+Maine,23,75,75,17,26
+Maryland,24,70,70,30,168
+Massachusetts,25,65,65,27,114
+Michigan,26,70,70,28,321
+Minnesota,27,70,65,34,167
+Mississippi,28,70,70,16,122
+Missouri,29,70,60,40,404
+Montana,30,80,65,36,86
+Nebraska,31,75,70,16,36
+Nevada,32,80,65,29,112
+New Hampshire,33,65,65,34,40
+New Jersey,34,65,55,25,178
+New Mexico,35,75,75,39,186
+New York,36,65,65,36,418
+North Carolina,37,70,70,29,478
+North Dakota,38,75,75,29,29
+Ohio,39,70,65,25,341
+Oklahoma,40,75,70,24,181
+Oregon,41,65,55,26,154
+Pennsylvania,42,70,70,41,500
+Rhode Island,44,65,55,32,20
+South Carolina,45,70,70,41,486
+South Dakota,46,80,80,24,35
+Tennessee,47,70,70,17,231
+Texas,48,75,75,35,1568
+Utah,49,75,70,33,109
+Vermont,50,65,55,41,30
+Virginia,51,70,70,35,337
+Washington,53,70,60,31,206
+West Virginia,54,70,55,23,64
+Wisconsin,55,70,70,34,212
+Wyoming,56,75,75,41,45
